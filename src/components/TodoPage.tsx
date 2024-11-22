@@ -19,7 +19,13 @@ const TodoPage = () => {
   }
 
   const handleDelete = async (id: number) => {
-    // @todo IMPLEMENT HERE : DELETE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
+    // @done IMPLEMENT HERE : DELETE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
+    try {
+      await api.delete(`/tasks/${id}`);
+      await handleFetchTasks();
+    } catch (error) {
+      console.error('Failed to delete the task:', error);
+    }
   }
 
   const handleSave = async (task: Partial<Task>) => {
@@ -71,7 +77,7 @@ const TodoPage = () => {
                 >
                   <Check />
                 </IconButton>
-                <IconButton color="error" onClick={() => { }}>
+                <IconButton color="error" onClick={() => { handleDelete(task.id) }}>
                   <Delete />
                 </IconButton>
               </Box>
