@@ -10,15 +10,30 @@ import { Task } from '../index';
 const TodoPage = () => {
   const api = useFetch();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [originalTasks, setOriginalTasks] = useState<Task[]>([]);
 
-  const handleFetchTasks = async () => setTasks(await api.get('/tasks'));
+    const handleFetchTasks = async () => {
+    const response = await api.get('/tasks');
+    setTasks(response);
+    setOriginalTasks(response);
+  }
 
   const handleDelete = async (id: number) => {
     // @todo IMPLEMENT HERE : DELETE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
   }
 
-  const handleSave = async () => {
-    // @todo IMPLEMENT HERE : SAVE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
+  const handleSave = async (task: Partial<Task>) => {
+    // @done IMPLEMENT HERE : SAVE THE TASK & REFRESH ALL THE TASKS, DON'T FORGET TO ATTACH THE FUNCTION TO THE APPROPRIATE BUTTON
+    try {
+      if (task.id) {
+        await api.patch(`/tasks/${task.id}`, { id: task.id, name: task.name });
+      } else {
+        await api.post('/tasks', { name: task.name });
+      }
+      await handleFetchTasks();
+    } catch (error) {
+      console.error('Failed to save the task:', error);
+    }
   }
 
   useEffect(() => {
@@ -35,14 +50,28 @@ const TodoPage = () => {
 
       <Box justifyContent="center" mt={5} flexDirection="column">
         {
-          tasks.map((task) => (
-            <Box display="flex" justifyContent="center" alignItems="center" mt={2} gap={1} width="100%">
-              <TextField size="small" value={task.name} fullWidth sx={{ maxWidth: 350 }} />
+          tasks?.map((task) => (
+            <Box display="flex" key={task.id} justifyContent="center" alignItems="center" mt={2} gap={1} width="100%">
+              <TextField
+                size="small"
+                value={task.name}
+                fullWidth sx={{ maxWidth: 350 }}
+                onChange={(e) => {
+                  const updatedTasks = tasks.map(t =>
+                    t.id === task.id ? { ...t, name: e.target.value } : t
+                  );
+                  setTasks(updatedTasks);
+                }}
+              />
               <Box>
-                <IconButton color="success" disabled>
+                <IconButton
+                  color="success"
+                  onClick={() => handleSave(task)}
+                  disabled={originalTasks.find(t => t.id === task.id)?.name === task.name}
+                >
                   <Check />
                 </IconButton>
-                <IconButton color="error" onClick={() => {}}>
+                <IconButton color="error" onClick={() => { }}>
                   <Delete />
                 </IconButton>
               </Box>
@@ -51,7 +80,7 @@ const TodoPage = () => {
         }
 
         <Box display="flex" justifyContent="center" alignItems="center" mt={2}>
-          <Button variant="outlined" onClick={() => {}}>Ajouter une tâche</Button>
+          <Button variant="outlined" onClick={() => handleSave({ name: "Nouvelle tâche" })}>Ajouter une tâche</Button>
         </Box>
       </Box>
     </Container>
